@@ -327,7 +327,7 @@ public class BluetoothService {
                                 }
                                 break;
                             default:
-                                setState(STATE_DISCONNECTED);
+                                //setState(STATE_DISCONNECTED);
                                 break;
                         }
                     }
