@@ -31,6 +31,12 @@
     <string name="user_cancelled">User denied screen sharing permission</string>
     <string name="btn_recorder">Record</string>
     <string name="btn_receiver">Receive</string>
+    <string name="screen_capture_start">Start</string>
+    <string name="screen_capture_stop">Stop</string>
+    <string name="screen_capture_status">Status</string>
+    <string name="screen_capture_record">Record</string>
+
+
 
     <!-- Device Profile -->
     <string name="device_profile">No Profile\n(Disconnected)</string>

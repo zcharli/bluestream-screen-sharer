@@ -45,11 +45,10 @@ public class MainActivity extends AppCompatActivity{
 
                     popupWindow.showAsDropDown(fab, Gravity.TOP, -1050, 0);
 
-                    final Button btnRecord = (Button) popupView.findViewById(R.id.button_record);
+                    /*final Button btnRecord = (Button) popupView.findViewById(R.id.button_record);
                     btnRecord.setOnClickListener(new Button.OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            btnRecord.setHint("recording");
 
                             getSupportFragmentManager().popBackStack();
                             BluetoothCaptureFragment newFragment = new BluetoothCaptureFragment();
@@ -58,13 +57,12 @@ public class MainActivity extends AppCompatActivity{
                             transaction.addToBackStack(null);
                             transaction.commit();
                         }
-                    });
+                    });*/
 
-                    final Button btnReceive = (Button) popupView.findViewById(R.id.button_receive);
+                    /*final Button btnReceive = (Button) popupView.findViewById(R.id.button_receive);
                     btnReceive.setOnClickListener(new Button.OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            btnReceive.setHint("receiving");
 
                             getSupportFragmentManager().popBackStack();
                             BluetoothCaptureFragment newFragment = new BluetoothCaptureFragment();
@@ -73,8 +71,7 @@ public class MainActivity extends AppCompatActivity{
                             transaction.addToBackStack(null);
                             transaction.commit();
                         }
-                    });
-
+                    });*/
 
                     final Button btnDismiss = (Button) popupView.findViewById(R.id.button_dismiss);
                     btnDismiss.setOnClickListener(new Button.OnClickListener() {
@@ -90,8 +87,9 @@ public class MainActivity extends AppCompatActivity{
                     btnExit.setOnClickListener(new Button.OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            getSupportFragmentManager().popBackStack();
+                            FLOATING_ACTION = !FLOATING_ACTION;
                             popupWindow.dismiss();
+                            getSupportFragmentManager().popBackStack();
                             findViewById(R.id.fab).setVisibility(View.INVISIBLE);
                         }
                     });
@@ -124,7 +122,6 @@ public class MainActivity extends AppCompatActivity{
 
         findViewById(R.id.enter_app).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                fab.setVisibility(View.VISIBLE);
 
                 FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
                 transaction.replace(R.id.fragment_container, new BluetoothCaptureFragment());

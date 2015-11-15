@@ -26,13 +26,14 @@
                 android:id="@+id/button_record"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:text="Record" />
+                android:text="@string/screen_capture_start"
+                android:allowUndo="false" />
 
             <Button
                 android:id="@+id/button_receive"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:text="Receive" />
+                android:text="@string/screen_capture_status" />
 
             <Button
                 android:id="@+id/button_dismiss"

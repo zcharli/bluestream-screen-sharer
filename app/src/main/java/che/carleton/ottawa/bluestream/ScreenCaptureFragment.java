@@ -38,7 +38,7 @@ import che.carleton.ottawa.activity.ActivityResultEvent;
  */
 
 //TODO: Refactor this class to act as a model rather than a fragment
-public class ScreenCaptureFragment extends Fragment implements View.OnClickListener {
+public class ScreenCaptureFragment extends Fragment{
 
     private static final String TAG = "ScreenCaptureFragment";
 
@@ -71,6 +71,10 @@ public class ScreenCaptureFragment extends Fragment implements View.OnClickListe
     /* Bluetooth Communication variables */
     private BluetoothService mBluetoothService = null;
 
+    private boolean ScreenCapturePlaying = false;
+
+    public boolean isScreenCapturePlaying() { return ScreenCapturePlaying; }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -84,6 +88,13 @@ public class ScreenCaptureFragment extends Fragment implements View.OnClickListe
     public void onStart() {
         super.onStart();
         ActivityResultBus.getInstance().register(mActivityResultSubscriber);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        // TODO: onStop may fire when we press home button. this may cause and issue
+        ActivityResultBus.getInstance().unregister(mActivityResultSubscriber);
     }
 
     private Object mActivityResultSubscriber = new Object() {
@@ -100,16 +111,12 @@ public class ScreenCaptureFragment extends Fragment implements View.OnClickListe
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-
         View v = inflater.inflate(R.layout.fragment_screen_capture, container, false);
         return v;
     }
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
-        mButtonToggle = (Button) view.findViewById(R.id.button_start);
-        mButtonToggle.setOnClickListener(this);
-
         //mMediaProjectionCallback = new MediaProjectionCallback();
         Activity activity = getActivity();
         DisplayMetrics metrics = new DisplayMetrics();
@@ -144,19 +151,6 @@ public class ScreenCaptureFragment extends Fragment implements View.OnClickListe
     }
 
     @Override
-    public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.button_start:
-                if (mButtonToggle.getText().toString().equalsIgnoreCase("Start")) {
-                    startScreenCapture();
-                } else {
-                    stopScreenCapture();
-                }
-                break;
-        }
-    }
-
-    @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         //super.onActivityResult(requestCode,resultCode,data);
         if (requestCode == REQUEST_MEDIA_PROJECTION) {
@@ -178,27 +172,14 @@ public class ScreenCaptureFragment extends Fragment implements View.OnClickListe
     }
 
     @Override
-    public void onStop() {
-        super.onStop();
-
-        stopScreenCapture();
-
-        // TODO: onStop may fire when we press home button. this may cause and issue
-        ActivityResultBus.getInstance().unregister(mActivityResultSubscriber);
-    }
-
-    @Override
     public void onPause() {
         super.onPause();
-        stopScreenCapture();
-        // THis line has been giving problems
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
 
-        tearDownMediaProjection();
         stopScreenCapture();
     }
 
@@ -222,7 +203,9 @@ public class ScreenCaptureFragment extends Fragment implements View.OnClickListe
         }
     }
 
-    private void startScreenCapture() {
+    public void startScreenCapture() {
+        ScreenCapturePlaying = true;
+
         if (mMediaProjection != null) {
             setUpVirtualDisplay();
         } else if (mResultCode != 0 && mResultData != null) {
@@ -236,8 +219,8 @@ public class ScreenCaptureFragment extends Fragment implements View.OnClickListe
         }
     }
 
-    private void stopScreenCapture() {
-        mButtonToggle.setText(R.string.start);
+    public void stopScreenCapture() {
+        ScreenCapturePlaying = false;
 
         mImageHandler.post(new Runnable() {
             @Override
@@ -271,7 +254,6 @@ public class ScreenCaptureFragment extends Fragment implements View.OnClickListe
         // Set the on image handler to capture a image and surface changes
         mImageReader.setOnImageAvailableListener(new ImageAvailableListener(), mImageHandler /* Handler*/);
 
-        mButtonToggle.setText(R.string.stop);
     }
 
     /*

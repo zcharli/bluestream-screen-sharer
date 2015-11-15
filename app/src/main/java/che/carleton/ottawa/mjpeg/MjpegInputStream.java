@@ -74,10 +74,10 @@ public class MjpegInputStream extends DataInputStream {
                 } else seqIndex = 0;
             }
         } catch (IOException e) {
-            Log.e(TAG, "disconnected", e);
+            // Log.e(TAG, "disconnected", e);
             mBluetoothService.connectionLost();
             // Start the service over to restart listening mode
-            //BluetoothService.start();
+            mBluetoothService.start();
             //break;
         }
 
@@ -206,6 +206,8 @@ public class MjpegInputStream extends DataInputStream {
         reset();
 
         if (header == null || headerLen != headerLenPrev) {
+            if (headerLen == -1)
+                return -1;
             header = new byte[headerLen];
             if (DEBUG) Log.d(TAG, "header renewed " + headerLenPrev + " -> " + headerLen);
         }

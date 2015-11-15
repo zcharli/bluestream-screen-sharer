@@ -12,6 +12,7 @@ import android.graphics.Typeface;
 import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+
 import java.io.IOException;
 
 /**
@@ -137,7 +138,7 @@ public class MjpegView extends SurfaceView implements SurfaceHolder.Callback {
 
                         if (ret == -1) {
                             //TODO: Enable Handler class in main activity to set this
-                            //Log.e(TAG,"Error on preparing images!");
+                            //Log.e(TAG, "Error on preparing images!");
                             //((MjpegActivity) saved_context).setImageError();
                             return;
                         }

@@ -49,7 +49,6 @@ public class BluetoothService {
     public static final int STATE_LISTEN = 1;     // now listening for incoming connections
     public static final int STATE_CONNECTING = 2; // now initiating an outgoing connection
     public static final int STATE_CONNECTED = 3;  // now connected to a remote device
-    public static final int STATE_DISCONNECTED = 4;  // now connected to a remote device
 
     /**
      * Constructor. Prepares a new BluetoothChat session.
@@ -210,6 +209,7 @@ public class BluetoothService {
             mInsecureAcceptThread.cancel();
             mInsecureAcceptThread = null;
         }
+
         setState(STATE_NONE);
     }
 
@@ -318,6 +318,8 @@ public class BluetoothService {
                                         mSocketType);
                                 break;
                             case STATE_NONE:
+                                cancel();
+                                break;
                             case STATE_CONNECTED:
                                 // Either not ready or already connected. Terminate new socket.
                                 try {
@@ -325,9 +327,6 @@ public class BluetoothService {
                                 } catch (IOException e) {
                                     //Log.e(TAG, "Could not close unwanted socket", e);
                                 }
-                                break;
-                            default:
-                                //setState(STATE_DISCONNECTED);
                                 break;
                         }
                     }

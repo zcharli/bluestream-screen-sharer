@@ -9,19 +9,23 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.PopupWindow;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -47,16 +51,11 @@ public class BluetoothCaptureFragment extends Fragment {
     private int DISPLAY_HEIGHT = 640;
 
     // Layout Views
-    private Button mStartCaptureButton;
-    private Button mServeScreen;
-    private Button mRecvScreen;
     private ScreenCaptureFragment mCaptureFragment = null;
 
     private String mConnectedDeviceName = null;
 
     private ArrayAdapter<String> mConversationArrayAdapter;
-
-    private StringBuffer mOutStringBuffer;
 
     private BluetoothAdapter mBluetoothAdapter = null;
 
@@ -82,6 +81,10 @@ public class BluetoothCaptureFragment extends Fragment {
     private final int [] profile_switch ={R.id.profile_switch_1, R.id.profile_switch_2,
             R.id.profile_switch_3, R.id.profile_switch_4, R.id.profile_switch_5,
             R.id.profile_switch_6, R.id.profile_switch_7, R.id.profile_switch_8};
+
+    private int [] profile_playing = {0, -1, -1, -1, -1, -1, -1, -1, -1};
+
+    private  boolean FLOATING_ACTION = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -116,6 +119,120 @@ public class BluetoothCaptureFragment extends Fragment {
 
         mMovieSurface = (MjpegView) getView().findViewById(R.id.mjpeg_surface);
         getView().findViewById(R.id.mjpeg_surface).setVisibility(View.INVISIBLE);
+        getActivity().findViewById(R.id.fab).setVisibility(View.VISIBLE);
+
+
+        final FloatingActionButton fab = (FloatingActionButton) getView().getRootView().findViewById(R.id.fab);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                LayoutInflater layoutInflater =
+                        (LayoutInflater) getActivity().getBaseContext()
+                                .getSystemService(getActivity().getBaseContext().LAYOUT_INFLATER_SERVICE);
+                if (!FLOATING_ACTION) {
+                    FLOATING_ACTION = !FLOATING_ACTION;
+                    View popupView = layoutInflater.inflate(R.layout.floating_action, null);
+                    final PopupWindow popupWindow = new PopupWindow(
+                            popupView, ViewGroup.LayoutParams.WRAP_CONTENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT);
+
+                    popupWindow.showAsDropDown(fab, Gravity.TOP, -1050, 0);
+
+                    final Button btnRecord = (Button) popupView.findViewById(R.id.button_record);
+
+                    if (mCaptureFragment != null) {
+                        if (mCaptureFragment.isScreenCapturePlaying()) {
+                            btnRecord.setText(R.string.screen_capture_stop);
+                        } else {
+                            btnRecord.setText(R.string.screen_capture_start);
+                        }
+                    }else{
+                        btnRecord.setText(R.string.screen_capture_start);
+                    }
+
+                    btnRecord.setOnClickListener(new Button.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            if (mCaptureFragment != null){
+                                if (mCaptureFragment.isScreenCapturePlaying()) {
+                                    btnRecord.setText(R.string.screen_capture_start);
+                                    mCaptureFragment.stopScreenCapture();
+                                }else{
+                                    btnRecord.setText(R.string.screen_capture_stop);
+                                    mCaptureFragment.startScreenCapture();
+                                }
+                            }
+                        }
+                    });
+
+                    final Button btnReceive = (Button) popupView.findViewById(R.id.button_receive);
+
+                    if (getView().findViewById(R.id.mjpeg_surface).getVisibility() == View.VISIBLE){
+                        btnReceive.setText(R.string.screen_capture_status);
+                    }else{
+                        btnReceive.setText(R.string.screen_capture_record);
+                    }
+
+                    btnReceive.setOnClickListener(new Button.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            if (btnReceive.getText().toString().equalsIgnoreCase("Status")){
+                                btnReceive.setText(R.string.screen_capture_record);
+                                getView().findViewById(R.id.mjpeg_surface).setVisibility(View.INVISIBLE);
+                                getView().findViewById(R.id.relativeLayout).setVisibility(View.VISIBLE);
+                                getView().findViewById(R.id.frameLayout).setVisibility(View.VISIBLE);
+                            }else{
+                                btnReceive.setText(R.string.screen_capture_status);
+                                getView().findViewById(R.id.mjpeg_surface).setVisibility(View.VISIBLE);
+                                getView().findViewById(R.id.relativeLayout).setVisibility(View.INVISIBLE);
+                                getView().findViewById(R.id.frameLayout).setVisibility(View.INVISIBLE);
+                            }
+                        }
+                    });
+
+                    final Button btnDismiss = (Button) popupView.findViewById(R.id.button_dismiss);
+                    btnDismiss.setOnClickListener(new Button.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            FLOATING_ACTION = !FLOATING_ACTION;
+                            popupWindow.dismiss();
+                        }
+                    });
+
+                    final Button btnExit = (Button) popupView.findViewById(R.id.button_exit);
+                    btnExit.setOnClickListener(new Button.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            FLOATING_ACTION = !FLOATING_ACTION;
+                            popupWindow.dismiss();
+                            getFragmentManager().popBackStack();
+                            getView().getRootView().findViewById(R.id.fab).setVisibility(View.INVISIBLE);
+                        }
+                    });
+
+                    popupView.setOnTouchListener(new View.OnTouchListener() {
+                        int orgX, orgY;
+                        int offsetX, offsetY;
+
+                        @Override
+                        public boolean onTouch(View v, MotionEvent event) {
+                            switch (event.getAction()) {
+                                case MotionEvent.ACTION_DOWN:
+                                    orgX = (int) event.getX();
+                                    orgY = (int) event.getY();
+                                    break;
+                                case MotionEvent.ACTION_MOVE:
+                                    offsetX = (int) event.getRawX() - orgX;
+                                    offsetY = (int) event.getRawY() - orgY;
+                                    popupWindow.update(offsetX, offsetY, -1, -1, true);
+                                    break;
+                            }
+                            return true;
+                        }
+                    });
+                }
+            }
+        });
     }
 
     @Override
@@ -137,14 +254,20 @@ public class BluetoothCaptureFragment extends Fragment {
 
         mac_address[profile_index] = BluetoothAdapter.getDefaultAdapter().getAddress();
 
-        Button system_connection = (Button) getView().findViewById(R.id.profile_connection);
+        final int [] temp_switch = profile_switch;
+
+        final Button system_connection = (Button) getView().findViewById(R.id.profile_connection);
         system_connection.setEnabled(true);
         system_connection.setText(R.string.device_connect_all);
         system_connection.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, profile_index == 0 ? "Connection All" : "Connecting",
+                Snackbar.make(view, profile_playing[profile_index] == 0 ? "Connection All" : "Connecting",
                         Snackbar.LENGTH_LONG).setAction("Action", null).show();
+
+                Switch profile_switch = (Switch) getView().findViewById(temp_switch[profile_index]);
+                profile_switch.setChecked(true);
+                profile_switch.setEnabled(false);
 
                 getView().findViewById(R.id.mjpeg_surface).setVisibility(View.VISIBLE);
 
@@ -154,6 +277,18 @@ public class BluetoothCaptureFragment extends Fragment {
                 isBroadcasting = true;
 
                 setHasOptionsMenu(false);
+
+                for (int i = 1; i < 9; i++){
+                    if (profile_playing[i] == 1){
+                        mBluetoothService.connectionLost();
+                        profile_playing[profile_index] = -1;
+                        mCaptureFragment = null;
+                        system_connection.setText(R.string.device_connect);
+                        return;
+                    }
+                }
+
+                profile_playing[profile_index] = 1;
 
                 // Create the result Intent and include the MAC address
                 Intent intent = new Intent();
@@ -170,13 +305,13 @@ public class BluetoothCaptureFragment extends Fragment {
                 getChildFragmentManager().beginTransaction()
                         .add(R.id.screen_capture_fragment, mCaptureFragment, "ScreenCaptureFragment")
                         .commit();
+
             }
         });
 
         Switch system_switch = (Switch) getView().findViewById(R.id.profile_switch_1);
         system_switch.setChecked(true);
         system_switch.setClickable(false);
-        final int [] temp_switch = profile_switch;
 
         system_profile.setOnClickListener(new Button.OnClickListener() {
             @Override
@@ -202,7 +337,7 @@ public class BluetoothCaptureFragment extends Fragment {
             ImageButton profile = (ImageButton) getView().findViewById(profile_id[++profile_index]);
             final int index = profile_index;
             final BluetoothDevice temp_device = device;
-
+            getView().findViewById(temp_switch[profile_index]).setEnabled(false);
             profile.setOnClickListener(new Button.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -211,20 +346,21 @@ public class BluetoothCaptureFragment extends Fragment {
                     profile_img.setBackgroundResource(profile_icon[profile_index]);
 
                     Button profile_connection = (Button) getView().findViewById(R.id.profile_connection);
-                    profile_connection.setText(R.string.device_connect);
+                    if (profile_playing[profile_index] == 1) {
+                        profile_connection.setText(R.string.device_disconnect);
+                    } else {
+                        profile_connection.setText(R.string.device_connect);
+                    }
                     profile_connection.setEnabled(true);
+                    getView().findViewById(temp_switch[profile_index]).setEnabled(false);
 
                     TextView profile_name = (TextView) getView().findViewById(R.id.profile_name);
-                    profile_name.setText(temp_device.getName()+"\n(Disconnected)");
+                    profile_name.setText(temp_device.getName() + "\n(Disconnected)");
 
                     TextView mac_address = (TextView) getView().findViewById(R.id.mac_address);
                     mac_address.setText("Mac Address: \n" + temp_device.getAddress());
                 }
             });
-
-            Switch profile_switch = (Switch) getView().findViewById(temp_switch[profile_index]);
-            profile_switch.setEnabled(false);
-
             mac_address[profile_index] = temp_device.getAddress();
         }
 
@@ -259,22 +395,37 @@ public class BluetoothCaptureFragment extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-
         getActivity().findViewById(R.id.fab).setVisibility(View.INVISIBLE);
 
         if (mBluetoothService != null) {
+            mBluetoothService.connectionLost();
             mBluetoothService.stop();
-        }
-        if(mMovieSurface != null) {
-            mMovieSurface.freeCameraMemory();
         }
     }
 
-    /*@Override
+    @Override
     public void onStop(){
         super.onStop();
-    }*/
+        if (mMovieSurface != null) {
+            if (mMovieSurface.isStreaming()) {
+                mMovieSurface.stopPlayback();
+                suspending = true;
+            }
+        }
 
+        if(mMovieSurface != null) {
+            mMovieSurface.freeCameraMemory();
+        }
+
+        if (mMovieSurface != null) {
+            if (mMovieSurface.isStreaming()) {
+                mMovieSurface.stopPlayback();
+                suspending = true;
+            }
+        }
+    }
+
+    @Override
     public void onPause() {
         super.onPause();
 
@@ -284,15 +435,13 @@ public class BluetoothCaptureFragment extends Fragment {
                 suspending = true;
             }
         }
-
     }
 
     @Override
     public void onResume() {
         super.onResume();
 
-        //System.out.println("On Resume");
-        if (mBluetoothService != null) {
+            if (mBluetoothService != null) {
             if (mBluetoothService.getState() == BluetoothService.STATE_NONE) {
                 mBluetoothService.start();
             }
@@ -308,7 +457,6 @@ public class BluetoothCaptureFragment extends Fragment {
     private void setupChat() {
         mConversationArrayAdapter = new ArrayAdapter<String>(getActivity(), R.layout.setup_chat_message);
         mBluetoothService = new BluetoothService(getActivity(), mHandler);
-        mOutStringBuffer = new StringBuffer("");
     }
 
     private void ensureDiscoverable() {
@@ -369,6 +517,7 @@ public class BluetoothCaptureFragment extends Fragment {
                             Toast.LENGTH_SHORT).show();
                     getActivity().finish();
                 }
+                break;
         }
     }
 
@@ -403,7 +552,7 @@ public class BluetoothCaptureFragment extends Fragment {
     }
 
     private void publishStreamToView(InputStream imgStream) {
-        if(mJpegInputStream == null) {
+        //if(mJpegInputStream == null) {
             mJpegInputStream = new MjpegInputStream(imgStream);
             mJpegInputStream.setBluetoothService(mBluetoothService);
             mMovieSurface.setSource(mJpegInputStream);
@@ -413,7 +562,7 @@ public class BluetoothCaptureFragment extends Fragment {
                 mMovieSurface.setDisplayMode(MjpegView.SIZE_BEST_FIT);
                 mMovieSurface.showFps(true);
             }
-        }
+        //}
 
     }
 
@@ -427,19 +576,16 @@ public class BluetoothCaptureFragment extends Fragment {
                         case BluetoothService.STATE_CONNECTED:
                             setStatus(getString(R.string.title_connected_to, mConnectedDeviceName));
                             mConversationArrayAdapter.clear();
-
                             if (mCaptureFragment != null) {
                                 // Capture Frag exists, so this is the server!
                                 mCaptureFragment.setBluetoothService(mBluetoothService);
                             }
-
                             break;
                         case BluetoothService.STATE_CONNECTING:
                             setStatus(R.string.title_connecting);
                             break;
                         case BluetoothService.STATE_LISTEN:
                         case BluetoothService.STATE_NONE:
-                            System.out.println("Disconnected");
                             setStatus(R.string.title_not_connected);
                             break;
                     }
@@ -482,8 +628,12 @@ public class BluetoothCaptureFragment extends Fragment {
                     if (null != activity) {
                         Toast.makeText(activity, msg.getData().getString(Constants.TOAST),
                                 Toast.LENGTH_SHORT).show();
+                        getView().findViewById(R.id.mjpeg_surface).setVisibility(View.INVISIBLE);
+
+                        getView().findViewById(R.id.relativeLayout).setVisibility(View.VISIBLE);
+                        getView().findViewById(R.id.frameLayout).setVisibility(View.VISIBLE);
                     }
-                    break;
+            break;
             }
         }
     };
