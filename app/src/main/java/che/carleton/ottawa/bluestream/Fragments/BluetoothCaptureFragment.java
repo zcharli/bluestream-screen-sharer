@@ -4,7 +4,10 @@ import android.app.ActionBar;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -30,7 +33,10 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.w3c.dom.Text;
+
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.Set;
 
 import che.carleton.ottawa.bluestream.Models.BluetoothService;
@@ -55,13 +61,9 @@ public class BluetoothCaptureFragment extends Fragment {
     private int DISPLAY_HEIGHT = 640;
     // Layout Views
     private ScreenCaptureFragment mCaptureFragment = null;
-
     private String mConnectedDeviceName = null;
 
-    private ArrayAdapter<String> mConversationArrayAdapter;
-
     private BluetoothAdapter mBluetoothAdapter = null;
-
     private BluetoothService mBluetoothService = null;
 
     /* Mjpeg viewer */
@@ -73,6 +75,7 @@ public class BluetoothCaptureFragment extends Fragment {
     public int profile_index = 0;
 
     private String [] mac_address = new String[8];
+    private HashMap<String,Integer> pairedDevicesSignalStrength;
 
     private final int [] profile_id = {R.id.profile_icon_1, R.id.profile_icon_2, R.id.profile_icon_3,
             R.id.profile_icon_4,R.id.profile_icon_5,R.id.profile_icon_6,
@@ -96,7 +99,11 @@ public class BluetoothCaptureFragment extends Fragment {
 
         // Get local Bluetooth adapter
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        pairedDevicesSignalStrength = new HashMap<>();
 
+        getActivity().registerReceiver(receiver, new IntentFilter(BluetoothDevice.ACTION_FOUND));
+        // Retrieving the signal strength. May be slow
+        mBluetoothAdapter.startDiscovery();
         // If the adapter is null, then Bluetooth is not supported
         if (mBluetoothAdapter == null) {
             FragmentActivity activity = getActivity();
@@ -259,7 +266,7 @@ public class BluetoothCaptureFragment extends Fragment {
         system_name.setText(system_name_txt);
 
         TextView system_mac_address = (TextView) getView().findViewById(R.id.mac_address);
-        String sys_mac_add_txt = "Mac Address: \n" + BluetoothAdapter.getDefaultAdapter().getAddress();
+        String sys_mac_add_txt = BluetoothAdapter.getDefaultAdapter().getAddress();
         system_mac_address.setText(sys_mac_add_txt);
 
         mac_address[profile_index] = BluetoothAdapter.getDefaultAdapter().getAddress();
@@ -312,9 +319,8 @@ public class BluetoothCaptureFragment extends Fragment {
                 }
 
                 mCaptureFragment = new ScreenCaptureFragment();
-                getChildFragmentManager().beginTransaction()
-                        .add(R.id.screen_capture_fragment, mCaptureFragment, "ScreenCaptureFragment")
-                        .commit();
+
+                setChildScreenCaptureFragment();
 
             }
         });
@@ -338,7 +344,7 @@ public class BluetoothCaptureFragment extends Fragment {
                 profile_name.setText(BluetoothAdapter.getDefaultAdapter().getName()+"\n(Connected)");
 
                 TextView mac_address = (TextView) getView().findViewById(R.id.mac_address);
-                mac_address.setText("Mac Address: \n" + BluetoothAdapter.getDefaultAdapter().getAddress());
+                mac_address.setText(BluetoothAdapter.getDefaultAdapter().getAddress());
             }
         });
 
@@ -369,7 +375,11 @@ public class BluetoothCaptureFragment extends Fragment {
                         profile_name.setText(temp_device.getName() + "\n(Disconnected)");
 
                         TextView mac_address = (TextView) getView().findViewById(R.id.mac_address);
-                        mac_address.setText("Mac Address: \n" + temp_device.getAddress());
+                        mac_address.setText(temp_device.getAddress());
+
+                        Integer signalDbm = pairedDevicesSignalStrength.get(temp_device.getName());
+                        TextView signal_strength = (TextView) getView().findViewById(R.id.signal_strength);
+                        signal_strength.setText(signalDbm + " " + "dBm");
                     }
                 });
                 mac_address[profile_index] = temp_device.getAddress();
@@ -377,6 +387,7 @@ public class BluetoothCaptureFragment extends Fragment {
 
         }
 
+        // THis while loop is used to fill up the rest?
         while(profile_index < 7) {
             ImageButton profile = (ImageButton) getView().findViewById(profile_id[++profile_index]);
 
@@ -397,6 +408,11 @@ public class BluetoothCaptureFragment extends Fragment {
 
                     TextView mac_address = (TextView) getView().findViewById(R.id.mac_address);
                     mac_address.setText(R.string.device_mac_address);
+
+                    Integer signalDbm = pairedDevicesSignalStrength.get(profile_name.getText()) == null
+                            ? 0 : pairedDevicesSignalStrength.get(profile_name.getText());
+                    TextView signal_strength = (TextView) getView().findViewById(R.id.signal_strength);
+                    signal_strength.setText(signalDbm + " " + "dBm");
                 }
             });
 
@@ -468,7 +484,6 @@ public class BluetoothCaptureFragment extends Fragment {
     }
 
     private void setupChat() {
-        mConversationArrayAdapter = new ArrayAdapter<String>(getActivity(), R.layout.setup_chat_message);
         mBluetoothService = new BluetoothService(getActivity(), mHandler);
     }
 
@@ -565,18 +580,35 @@ public class BluetoothCaptureFragment extends Fragment {
     }
 
     private void publishStreamToView(InputStream imgStream) {
-        //if(mJpegInputStream == null) {
-            mJpegInputStream = new MjpegInputStream(imgStream);
-            mJpegInputStream.setBluetoothService(mBluetoothService);
-            mMovieSurface.setSource(mJpegInputStream);
 
-            if(mJpegInputStream != null) {
-                mJpegInputStream.setSkip(1);
-                mMovieSurface.setDisplayMode(MjpegView.SIZE_BEST_FIT);
-                mMovieSurface.showFps(true);
+        mJpegInputStream = new MjpegInputStream(imgStream);
+        mJpegInputStream.setBluetoothService(mBluetoothService);
+        mMovieSurface.setSource(mJpegInputStream);
+
+        if(mJpegInputStream != null) {
+            mJpegInputStream.setSkip(1);
+            mMovieSurface.setDisplayMode(MjpegView.SIZE_BEST_FIT);
+            mMovieSurface.showFps(true);
+        }
+    }
+
+    private final BroadcastReceiver receiver = new BroadcastReceiver(){
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            String action = intent.getAction();
+            if(BluetoothDevice.ACTION_FOUND.equals(action)) {
+                int rssi = intent.getShortExtra(BluetoothDevice.EXTRA_RSSI, Short.MIN_VALUE);
+                String name = intent.getStringExtra(BluetoothDevice.EXTRA_NAME);
+                pairedDevicesSignalStrength.put(name,rssi);
             }
-        //}
+        }
+    };
 
+    public void setChildScreenCaptureFragment() {
+        getChildFragmentManager().beginTransaction()
+                .add(R.id.screen_capture_fragment, mCaptureFragment, "ScreenCaptureFragment")
+                .commit();
     }
 
     private final Handler mHandler = new Handler() {
@@ -588,7 +620,6 @@ public class BluetoothCaptureFragment extends Fragment {
                     switch (msg.arg1) {
                         case BluetoothService.STATE_CONNECTED:
                             setStatus(getString(R.string.title_connected_to, mConnectedDeviceName));
-                            mConversationArrayAdapter.clear();
                             if (mCaptureFragment != null) {
                                 // Capture Frag exists, so this is the server!
                                 mCaptureFragment.setBluetoothService(mBluetoothService);
@@ -606,8 +637,6 @@ public class BluetoothCaptureFragment extends Fragment {
                 case Constants.MESSAGE_WRITE:
                     byte[] writeBuf = (byte[]) msg.obj;
                     // construct a string from the buffer
-                    String writeMessage = new String(writeBuf);
-                    mConversationArrayAdapter.add("Me:  " + writeMessage);
                     break;
                 case Constants.MESSAGE_READ:
                     // Message read is sent to both client and server even though client broadcasts

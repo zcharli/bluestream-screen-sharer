@@ -35,7 +35,7 @@ public class BluetoothService {
             UUID.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66");
     private static final UUID MY_UUID_INSECURE =
             UUID.fromString("8ce255c0-200a-11e0-ac64-0800200c9a66");
-    private final static int FRAME_MAX_LENGTH = 200000;
+
     // Member fields
     private final BluetoothAdapter mAdapter;
     private final Handler mHandler;
@@ -141,6 +141,7 @@ public class BluetoothService {
         // Start the thread to connect with the given device
         mConnectThread = new ConnectThread(device, secure);
         mConnectThread.start();
+
         setState(STATE_CONNECTING);
     }
 
@@ -348,6 +349,9 @@ public class BluetoothService {
         }
     }
 
+    public String getSignalStrenghOfConnectedDevice() {
+        return mConnectThread.mmDevice.EXTRA_RSSI;
+    }
 
     /**
      * This thread runs while attempting to make an outgoing connection
@@ -449,29 +453,13 @@ public class BluetoothService {
 
 
         public void run() {
-            //Log.i(TAG, "BEGIN mConnectedThread");
-            //byte[] buffer = new byte[32768];
-            //int bytes;
-            //ByteArrayOutputStream imgByteStream = new ByteArrayOutputStream();
+
             // Keep listening to the InputStream while connected
             try {
 
-                //try {
-//                        // Read entire image from the InputStream
-//                        while ((bytes = mmInStream.read(buffer)) != -1) {
-//                            imgByteStream.write(buffer);
-//
-//                        }
                 // Send the obtained bytes to the UI Activity
                 mHandler.obtainMessage(Constants.MESSAGE_READ, 0, -1, mmInStream)
                         .sendToTarget();
-//                    } catch (IOException e) {
-//                        Log.e(TAG, "disconnected", e);
-//                        connectionLost();
-//                        // Start the service over to restart listening mode
-//                        BluetoothService.this.start();
-//                        //break;
-//                    }
 
             } catch (Exception e) {
                 e.printStackTrace();

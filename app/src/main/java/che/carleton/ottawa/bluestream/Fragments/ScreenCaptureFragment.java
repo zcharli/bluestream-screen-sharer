@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.ImageFormat;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.hardware.display.DisplayManager;
@@ -250,7 +251,6 @@ public class ScreenCaptureFragment extends Fragment{
         DISPLAY_HEIGHT = size.y;
         // Initialize image reader
         mImageReader = ImageReader.newInstance(DISPLAY_WIDTH, DISPLAY_HEIGHT, PixelFormat.RGBA_8888, 2);
-
 
         // Initialize the media projection and hook image reader to capture the surface
         mMediaProjection.createVirtualDisplay("ScreenCapture",

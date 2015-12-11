@@ -23,6 +23,7 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.PopupWindow;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -48,6 +49,9 @@ public class MainActivity extends AppCompatActivity {
     private TypedArray drawerMenuIcons;
     private ArrayList<NavDrawerItem> navDrawerItems;
     private NavDrawerListAdapter drawerListAdapater;
+
+    // Bad to have this here, but we need to reuse the same fragment
+    private BluetoothCaptureFragment mBTCaptureFragment = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -177,9 +181,9 @@ public class MainActivity extends AppCompatActivity {
 
         findViewById(R.id.enter_app).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-
+                mBTCaptureFragment = new BluetoothCaptureFragment();
                 FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-                transaction.replace(R.id.fragment_container, new BluetoothCaptureFragment());
+                transaction.replace(R.id.fragment_container, mBTCaptureFragment);
                 transaction.addToBackStack(null);
                 transaction.commit();
             }
@@ -242,12 +246,23 @@ public class MainActivity extends AppCompatActivity {
         Fragment fragment = null;
         switch (position) {
             case 0:
-                fragment = new BluetoothCaptureFragment();
+                if(mBTCaptureFragment != null)
+                    fragment = mBTCaptureFragment;
                 break;
             case 1:
-                fragment = new BluetoothCaptureFragment();
+                if(mBTCaptureFragment != null)
+                    fragment = mBTCaptureFragment;
                 break;
             case 2:
+//                if(mBTCaptureFragment != null)
+//                    mBTCaptureFragment.setChildScreenCaptureFragment();
+                Toast.makeText(this,"Not Implemented Yet",Toast.LENGTH_SHORT).show();
+                break;
+            case 3:
+                //fragment = new SettingsFragment();
+                Toast.makeText(this,"Not Implemented Yet",Toast.LENGTH_SHORT).show();
+                break;
+            case 4:
                 fragment = new SettingsFragment();
                 break;
             default:

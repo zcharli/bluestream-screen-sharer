@@ -52,10 +52,12 @@
             android:id="@+id/mac_address"
             android:layout_gravity="left|center_vertical"
             android:layout_marginLeft="20dp"
-            android:layout_below="@+id/profile_name"
+            android:layout_below="@+id/signal_strength"
             android:layout_alignStart="@+id/profile_name"
             android:layout_toStartOf="@+id/profile_img"
-            android:textSize="16sp" />
+            android:textSize="16sp"
+             />
+
 
         <TextView
             android:layout_width="wrap_content"
@@ -68,6 +70,18 @@
             android:layout_marginLeft="20dp"
             android:textStyle="bold"
             android:textSize="20sp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="@string/signal_strength"
+            android:id="@+id/signal_strength"
+            android:layout_gravity="left|top|right"
+            android:layout_alignStart="@+id/profile_name"
+            android:layout_marginLeft="20dp"
+            android:textSize="16sp"
+            android:layout_below="@+id/profile_name" />
+
 
         <Button
             android:layout_width="160dp"
