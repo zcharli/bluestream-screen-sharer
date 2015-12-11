@@ -75,7 +75,7 @@ public class ScreenCaptureFragment extends Fragment{
     //private MediaRecorder mMediaRecorder;
     private ImageReader mImageReader;
     private int DISPLAY_WIDTH = 480;
-    private int DISPLAY_HEIGHT = 1040;
+    private int DISPLAY_HEIGHT = 640;
 
     /* Bluetooth Communication variables */
     private BluetoothService mBluetoothService = null;
