@@ -34,18 +34,17 @@
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/screen_capture_status" />
-
-            <Button
-                android:id="@+id/button_dismiss"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:text="Dismiss" />
-
             <Button
                 android:id="@+id/button_exit"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:text="Exit" />
+                android:text="@string/reset_connection" />
+            <Button
+                android:id="@+id/button_dismiss"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/dismiss_popup" />
+
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

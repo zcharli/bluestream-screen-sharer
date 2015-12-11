@@ -1,10 +1,13 @@
-package che.carleton.ottawa.bluestream;
+package che.carleton.ottawa.bluestream.Fragments;
 
 import android.app.ActionBar;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -30,9 +33,16 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.w3c.dom.Text;
+
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.Set;
 
+import che.carleton.ottawa.bluestream.Models.BluetoothService;
+import che.carleton.ottawa.bluestream.Constants;
+import che.carleton.ottawa.bluestream.Activities.DeviceListActivity;
+import che.carleton.ottawa.bluestream.R;
 import che.carleton.ottawa.mjpeg.MjpegInputStream;
 import che.carleton.ottawa.mjpeg.MjpegView;
 
@@ -49,16 +59,11 @@ public class BluetoothCaptureFragment extends Fragment {
     private static final int REQUEST_ENABLE_BT = 3;
     private int DISPLAY_WIDTH = 480;
     private int DISPLAY_HEIGHT = 640;
-
     // Layout Views
     private ScreenCaptureFragment mCaptureFragment = null;
-
     private String mConnectedDeviceName = null;
 
-    private ArrayAdapter<String> mConversationArrayAdapter;
-
     private BluetoothAdapter mBluetoothAdapter = null;
-
     private BluetoothService mBluetoothService = null;
 
     /* Mjpeg viewer */
@@ -70,6 +75,7 @@ public class BluetoothCaptureFragment extends Fragment {
     public int profile_index = 0;
 
     private String [] mac_address = new String[8];
+    private HashMap<String,Integer> pairedDevicesSignalStrength;
 
     private final int [] profile_id = {R.id.profile_icon_1, R.id.profile_icon_2, R.id.profile_icon_3,
             R.id.profile_icon_4,R.id.profile_icon_5,R.id.profile_icon_6,
@@ -93,7 +99,11 @@ public class BluetoothCaptureFragment extends Fragment {
 
         // Get local Bluetooth adapter
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        pairedDevicesSignalStrength = new HashMap<>();
 
+        getActivity().registerReceiver(receiver, new IntentFilter(BluetoothDevice.ACTION_FOUND));
+        // Retrieving the signal strength. May be slow
+        mBluetoothAdapter.startDiscovery();
         // If the adapter is null, then Bluetooth is not supported
         if (mBluetoothAdapter == null) {
             FragmentActivity activity = getActivity();
@@ -121,7 +131,9 @@ public class BluetoothCaptureFragment extends Fragment {
         getView().findViewById(R.id.mjpeg_surface).setVisibility(View.INVISIBLE);
         getActivity().findViewById(R.id.fab).setVisibility(View.VISIBLE);
 
-
+        /*
+          Note to self: Duplicated code. Find a new way to reset other than have these buttons.
+        */
         final FloatingActionButton fab = (FloatingActionButton) getView().getRootView().findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -205,7 +217,12 @@ public class BluetoothCaptureFragment extends Fragment {
                         public void onClick(View v) {
                             FLOATING_ACTION = !FLOATING_ACTION;
                             popupWindow.dismiss();
-                            getFragmentManager().popBackStack();
+                            int totalViewsInFragmentStack = getFragmentManager().getBackStackEntryCount();
+                            while(totalViewsInFragmentStack != 0)
+                            {
+                                getFragmentManager().popBackStack();
+                                totalViewsInFragmentStack--;
+                            }
                             getView().getRootView().findViewById(R.id.fab).setVisibility(View.INVISIBLE);
                         }
                     });
@@ -249,7 +266,7 @@ public class BluetoothCaptureFragment extends Fragment {
         system_name.setText(system_name_txt);
 
         TextView system_mac_address = (TextView) getView().findViewById(R.id.mac_address);
-        String sys_mac_add_txt = "Mac Address: \n" + BluetoothAdapter.getDefaultAdapter().getAddress();
+        String sys_mac_add_txt = BluetoothAdapter.getDefaultAdapter().getAddress();
         system_mac_address.setText(sys_mac_add_txt);
 
         mac_address[profile_index] = BluetoothAdapter.getDefaultAdapter().getAddress();
@@ -302,9 +319,8 @@ public class BluetoothCaptureFragment extends Fragment {
                 }
 
                 mCaptureFragment = new ScreenCaptureFragment();
-                getChildFragmentManager().beginTransaction()
-                        .add(R.id.screen_capture_fragment, mCaptureFragment, "ScreenCaptureFragment")
-                        .commit();
+
+                setChildScreenCaptureFragment();
 
             }
         });
@@ -328,42 +344,50 @@ public class BluetoothCaptureFragment extends Fragment {
                 profile_name.setText(BluetoothAdapter.getDefaultAdapter().getName()+"\n(Connected)");
 
                 TextView mac_address = (TextView) getView().findViewById(R.id.mac_address);
-                mac_address.setText("Mac Address: \n" + BluetoothAdapter.getDefaultAdapter().getAddress());
+                mac_address.setText(BluetoothAdapter.getDefaultAdapter().getAddress());
             }
         });
 
 
         for (BluetoothDevice device : pairedDevices) {
-            ImageButton profile = (ImageButton) getView().findViewById(profile_id[++profile_index]);
-            final int index = profile_index;
-            final BluetoothDevice temp_device = device;
-            getView().findViewById(temp_switch[profile_index]).setEnabled(false);
-            profile.setOnClickListener(new Button.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    profile_index = index;
-                    ImageView profile_img = (ImageView) getView().findViewById(R.id.profile_img);
-                    profile_img.setBackgroundResource(profile_icon[profile_index]);
+            if(profile_index + 1 < Constants.MAX_PROFILE_CONNECTIONS) {
+                ImageButton profile = (ImageButton) getView().findViewById(profile_id[++profile_index]);
+                final int index = profile_index;
+                final BluetoothDevice temp_device = device;
+                getView().findViewById(temp_switch[profile_index]).setEnabled(false);
+                profile.setOnClickListener(new Button.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        profile_index = index;
+                        ImageView profile_img = (ImageView) getView().findViewById(R.id.profile_img);
+                        profile_img.setBackgroundResource(profile_icon[profile_index]);
 
-                    Button profile_connection = (Button) getView().findViewById(R.id.profile_connection);
-                    if (profile_playing[profile_index] == 1) {
-                        profile_connection.setText(R.string.device_disconnect);
-                    } else {
-                        profile_connection.setText(R.string.device_connect);
+                        Button profile_connection = (Button) getView().findViewById(R.id.profile_connection);
+                        if (profile_playing[profile_index] == 1) {
+                            profile_connection.setText(R.string.device_disconnect);
+                        } else {
+                            profile_connection.setText(R.string.device_connect);
+                        }
+                        profile_connection.setEnabled(true);
+                        getView().findViewById(temp_switch[profile_index]).setEnabled(false);
+
+                        TextView profile_name = (TextView) getView().findViewById(R.id.profile_name);
+                        profile_name.setText(temp_device.getName() + "\n(Disconnected)");
+
+                        TextView mac_address = (TextView) getView().findViewById(R.id.mac_address);
+                        mac_address.setText(temp_device.getAddress());
+
+                        Integer signalDbm = pairedDevicesSignalStrength.get(temp_device.getName());
+                        TextView signal_strength = (TextView) getView().findViewById(R.id.signal_strength);
+                        signal_strength.setText(signalDbm + " " + "dBm");
                     }
-                    profile_connection.setEnabled(true);
-                    getView().findViewById(temp_switch[profile_index]).setEnabled(false);
+                });
+                mac_address[profile_index] = temp_device.getAddress();
+            }
 
-                    TextView profile_name = (TextView) getView().findViewById(R.id.profile_name);
-                    profile_name.setText(temp_device.getName() + "\n(Disconnected)");
-
-                    TextView mac_address = (TextView) getView().findViewById(R.id.mac_address);
-                    mac_address.setText("Mac Address: \n" + temp_device.getAddress());
-                }
-            });
-            mac_address[profile_index] = temp_device.getAddress();
         }
 
+        // THis while loop is used to fill up the rest?
         while(profile_index < 7) {
             ImageButton profile = (ImageButton) getView().findViewById(profile_id[++profile_index]);
 
@@ -384,6 +408,11 @@ public class BluetoothCaptureFragment extends Fragment {
 
                     TextView mac_address = (TextView) getView().findViewById(R.id.mac_address);
                     mac_address.setText(R.string.device_mac_address);
+
+                    Integer signalDbm = pairedDevicesSignalStrength.get(profile_name.getText()) == null
+                            ? 0 : pairedDevicesSignalStrength.get(profile_name.getText());
+                    TextView signal_strength = (TextView) getView().findViewById(R.id.signal_strength);
+                    signal_strength.setText(signalDbm + " " + "dBm");
                 }
             });
 
@@ -455,7 +484,6 @@ public class BluetoothCaptureFragment extends Fragment {
     }
 
     private void setupChat() {
-        mConversationArrayAdapter = new ArrayAdapter<String>(getActivity(), R.layout.setup_chat_message);
         mBluetoothService = new BluetoothService(getActivity(), mHandler);
     }
 
@@ -552,18 +580,35 @@ public class BluetoothCaptureFragment extends Fragment {
     }
 
     private void publishStreamToView(InputStream imgStream) {
-        //if(mJpegInputStream == null) {
-            mJpegInputStream = new MjpegInputStream(imgStream);
-            mJpegInputStream.setBluetoothService(mBluetoothService);
-            mMovieSurface.setSource(mJpegInputStream);
 
-            if(mJpegInputStream != null) {
-                mJpegInputStream.setSkip(1);
-                mMovieSurface.setDisplayMode(MjpegView.SIZE_BEST_FIT);
-                mMovieSurface.showFps(true);
+        mJpegInputStream = new MjpegInputStream(imgStream);
+        mJpegInputStream.setBluetoothService(mBluetoothService);
+        mMovieSurface.setSource(mJpegInputStream);
+
+        if(mJpegInputStream != null) {
+            mJpegInputStream.setSkip(1);
+            mMovieSurface.setDisplayMode(MjpegView.SIZE_BEST_FIT);
+            mMovieSurface.showFps(true);
+        }
+    }
+
+    private final BroadcastReceiver receiver = new BroadcastReceiver(){
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            String action = intent.getAction();
+            if(BluetoothDevice.ACTION_FOUND.equals(action)) {
+                int rssi = intent.getShortExtra(BluetoothDevice.EXTRA_RSSI, Short.MIN_VALUE);
+                String name = intent.getStringExtra(BluetoothDevice.EXTRA_NAME);
+                pairedDevicesSignalStrength.put(name,rssi);
             }
-        //}
+        }
+    };
 
+    public void setChildScreenCaptureFragment() {
+        getChildFragmentManager().beginTransaction()
+                .add(R.id.screen_capture_fragment, mCaptureFragment, "ScreenCaptureFragment")
+                .commit();
     }
 
     private final Handler mHandler = new Handler() {
@@ -575,7 +620,6 @@ public class BluetoothCaptureFragment extends Fragment {
                     switch (msg.arg1) {
                         case BluetoothService.STATE_CONNECTED:
                             setStatus(getString(R.string.title_connected_to, mConnectedDeviceName));
-                            mConversationArrayAdapter.clear();
                             if (mCaptureFragment != null) {
                                 // Capture Frag exists, so this is the server!
                                 mCaptureFragment.setBluetoothService(mBluetoothService);
@@ -593,8 +637,6 @@ public class BluetoothCaptureFragment extends Fragment {
                 case Constants.MESSAGE_WRITE:
                     byte[] writeBuf = (byte[]) msg.obj;
                     // construct a string from the buffer
-                    String writeMessage = new String(writeBuf);
-                    mConversationArrayAdapter.add("Me:  " + writeMessage);
                     break;
                 case Constants.MESSAGE_READ:
                     // Message read is sent to both client and server even though client broadcasts

@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-import che.carleton.ottawa.bluestream.BluetoothService;
+import che.carleton.ottawa.bluestream.Models.BluetoothService;
 
 /**
  * Created by Ziqiao Charlie Li on 10/27/2015.
@@ -36,6 +36,7 @@ public class MjpegInputStream extends DataInputStream {
     private static final String TAG = "MJPEG";
     private static final boolean DEBUG = true;
     private BluetoothService mBluetoothService = null;
+
     static {
         System.loadLibrary("ImageProc");
     }
@@ -44,23 +45,13 @@ public class MjpegInputStream extends DataInputStream {
 
     public native void freeCameraMemory();
 
-//    public static MJPEGInputStream read(String surl) {
-//        try {
-//            URL url = new URL(surl);
-//            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-//            return new MJPEGInputStream(urlConnection.getInputStream());
-//        } catch (Exception e) {
-//        }
-//
-//        return null;
-//    }
-
     public MjpegInputStream(InputStream in) {
         super(new BufferedInputStream(in, FRAME_MAX_LENGTH));
     }
 
-    private int getEndOfSeqeunce(DataInputStream in, byte[] sequence) {
+    private int getEndOfSequence(DataInputStream in, byte[] sequence) {
         try {
+
             int seqIndex = 0;
             byte c;
             for (int i = 0; i < FRAME_MAX_LENGTH; i++) {
@@ -88,7 +79,7 @@ public class MjpegInputStream extends DataInputStream {
 
     private int getStartOfSequence(DataInputStream in, byte[] sequence)
             throws IOException {
-        int end = getEndOfSeqeunce(in, sequence);
+        int end = getEndOfSequence(in, sequence);
         return (end < 0) ? (-1) : (end - sequence.length);
     }
 
@@ -153,7 +144,7 @@ public class MjpegInputStream extends DataInputStream {
             if (ContentLengthNew < 0) {
                 if (DEBUG) Log.d(TAG, "Worst case for finding EOF_MARKER");
                 reset();
-                ContentLengthNew = getEndOfSeqeunce(this, EOF_MARKER);
+                ContentLengthNew = getEndOfSequence(this, EOF_MARKER);
             }
         } catch (IllegalArgumentException e) {
             if (DEBUG) Log.d(TAG, "IllegalArgumentException in parseContentLength");
@@ -162,7 +153,7 @@ public class MjpegInputStream extends DataInputStream {
             if (ContentLengthNew < 0) {
                 if (DEBUG) Log.d(TAG, "Worst case for finding EOF_MARKER");
                 reset();
-                ContentLengthNew = getEndOfSeqeunce(this, EOF_MARKER);
+                ContentLengthNew = getEndOfSequence(this, EOF_MARKER);
             }
         } catch (IOException e) {
             if (DEBUG) Log.d(TAG, "IOException in parseContentLength");
@@ -194,6 +185,7 @@ public class MjpegInputStream extends DataInputStream {
     }
 
     public int readMjpegFrame(Bitmap bmp) throws IOException {
+        String signalStrength = mBluetoothService.getSignalStrenghOfConnectedDevice();
         mark(FRAME_MAX_LENGTH);
         int headerLen;
         try {
@@ -224,7 +216,7 @@ public class MjpegInputStream extends DataInputStream {
             if (ContentLengthNew < 0) {
                 if (DEBUG) Log.d(TAG, "Worst case for finding EOF_MARKER");
                 reset();
-                ContentLengthNew = getEndOfSeqeunce(this, EOF_MARKER);
+                ContentLengthNew = getEndOfSequence(this, EOF_MARKER);
             }
         } catch (IllegalArgumentException e) {
             if (DEBUG) Log.d(TAG, "IllegalArgumentException in parseContentLength");
@@ -233,7 +225,7 @@ public class MjpegInputStream extends DataInputStream {
             if (ContentLengthNew < 0) {
                 if (DEBUG) Log.d(TAG, "Worst case for finding EOF_MARKER");
                 reset();
-                ContentLengthNew = getEndOfSeqeunce(this, EOF_MARKER);
+                ContentLengthNew = getEndOfSequence(this, EOF_MARKER);
             }
         } catch (IOException e) {
             if (DEBUG) Log.d(TAG, "IOException in parseContentLength");
