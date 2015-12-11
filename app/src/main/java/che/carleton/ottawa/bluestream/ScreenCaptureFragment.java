@@ -12,6 +12,7 @@ import android.media.ImageReader;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.Nullable;
@@ -27,7 +28,10 @@ import android.widget.Toast;
 import com.squareup.otto.Subscribe;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
 import che.carleton.ottawa.activity.ActivityResultBus;
@@ -289,11 +293,28 @@ public class ScreenCaptureFragment extends Fragment{
                     int pixelStride = planes[0].getPixelStride();
                     int rowStride = planes[0].getRowStride();
                     int rowPadding = rowStride - pixelStride * DISPLAY_WIDTH;
-                    bitmap = Bitmap.createBitmap(DISPLAY_WIDTH+rowPadding/pixelStride, DISPLAY_HEIGHT, Bitmap.Config.ARGB_8888);
+                    bitmap = Bitmap.createBitmap(DISPLAY_WIDTH + rowPadding / pixelStride, DISPLAY_HEIGHT, Bitmap.Config.ARGB_8888);
                     // Fill the bitmap with the pixels in our buffer
+
                     bitmap.copyPixelsFromBuffer(buffer);
-                    bitmap = Bitmap.createScaledBitmap(bitmap,480,640,false);
+                    bitmap = Bitmap.createScaledBitmap(bitmap, 480, 640, false);
                     // Compress bitmap and send over to output stream in bluetooth socket
+
+                    int []rate = {10,20,30,40,50,60,70,80,90,98};
+                    for (int i = 0; i < 0; i++) {
+                        String path = Environment.getExternalStorageDirectory().toString();
+                        OutputStream fOut = null;
+                        File file = new File(path, "F"+rate[i]+".jpg"); // the File to save to
+                        fOut = new FileOutputStream(file);
+
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, rate[i], jpegByteOutStream);
+                        jpegByteOutStream.writeTo(fOut);
+
+                        // saving the Bitmap to a file compressed as a JPEG with 85% compression rate
+                        fOut.flush();
+                        fOut.close(); // do not forget to close the stream
+                    }
+
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 50, jpegByteOutStream);
                     // Send the byte output stream to bluetooth output stream
                     mBluetoothService.write(jpegByteOutStream.toByteArray());

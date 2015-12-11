@@ -5,14 +5,14 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
 
-import che.carleton.ottawa.bluestream.BluetoothService;
-
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+
+import che.carleton.ottawa.bluestream.BluetoothService;
 
 /**
  * Created by Ziqiao Charlie Li on 10/27/2015.
@@ -73,6 +73,7 @@ public class MjpegInputStream extends DataInputStream {
                     }
                 } else seqIndex = 0;
             }
+            return 0;
         } catch (IOException e) {
             // Log.e(TAG, "disconnected", e);
             mBluetoothService.connectionLost();
@@ -257,10 +258,12 @@ public class MjpegInputStream extends DataInputStream {
         readFully(frameData, 0, mContentLength);
 
         if (count++ % skip == 0) {
+            System.out.println("Size: " + pixeltobmp(frameData, mContentLength, bmp));
             return pixeltobmp(frameData, mContentLength, bmp);
         } else {
             return 0;
         }
+        //return 0;
     }
 
     public void setSkip(int s) {
