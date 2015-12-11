@@ -52,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
 
     // Bad to have this here, but we need to reuse the same fragment
     private BluetoothCaptureFragment mBTCaptureFragment = null;
+    private SettingsFragment mSettingsFragment = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -143,8 +144,7 @@ public class MainActivity extends AppCompatActivity {
                             FLOATING_ACTION = !FLOATING_ACTION;
                             popupWindow.dismiss();
                             int totalViewsInFragmentStack = getSupportFragmentManager().getBackStackEntryCount();
-                            while(totalViewsInFragmentStack != 0)
-                            {
+                            while (totalViewsInFragmentStack != 0) {
                                 getSupportFragmentManager().popBackStack();
                                 totalViewsInFragmentStack--;
                             }
@@ -246,12 +246,17 @@ public class MainActivity extends AppCompatActivity {
         Fragment fragment = null;
         switch (position) {
             case 0:
-                if(mBTCaptureFragment != null)
-                    fragment = mBTCaptureFragment;
+                Toast.makeText(this,"Nothing to see here...",Toast.LENGTH_SHORT).show();
+//                if(mBTCaptureFragment == null) {
+//                    mBTCaptureFragment = new BluetoothCaptureFragment();
+//                }
+//                fragment = mBTCaptureFragment;
                 break;
             case 1:
-                if(mBTCaptureFragment != null)
-                    fragment = mBTCaptureFragment;
+                if(mBTCaptureFragment == null) {
+                    mBTCaptureFragment = new BluetoothCaptureFragment();
+                }
+                fragment = mBTCaptureFragment;
                 break;
             case 2:
 //                if(mBTCaptureFragment != null)
@@ -263,7 +268,10 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this,"Not Implemented Yet",Toast.LENGTH_SHORT).show();
                 break;
             case 4:
-                fragment = new SettingsFragment();
+                if(mSettingsFragment == null) {
+                    mSettingsFragment = new SettingsFragment();
+                }
+                fragment = mSettingsFragment;
                 break;
             default:
                 break;
