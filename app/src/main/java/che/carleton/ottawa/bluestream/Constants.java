@@ -1,5 +1,7 @@
 package che.carleton.ottawa.bluestream;
 
+import che.carleton.ottawa.bluestream.Models.BluetoothService;
+
 /**
  * Defines several constants used between {@link BluetoothService} and the UI.
  */
@@ -10,6 +12,7 @@ public interface Constants {
     public static final int MESSAGE_WRITE = 3;
     public static final int MESSAGE_DEVICE_NAME = 4;
     public static final int MESSAGE_TOAST = 5;
+    public static final int MAX_PROFILE_CONNECTIONS = 8;
 
     // Key names received from the BluetoothChatService Handler
     public static final String DEVICE_NAME = "device_name";

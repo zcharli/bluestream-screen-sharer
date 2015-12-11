@@ -1,4 +1,4 @@
-package che.carleton.ottawa.bluestream;
+package che.carleton.ottawa.bluestream.Fragments;
 
 import android.app.Activity;
 import android.content.Context;
@@ -34,8 +34,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
+import che.carleton.ottawa.bluestream.Constants;
 import che.carleton.ottawa.activity.ActivityResultBus;
 import che.carleton.ottawa.activity.ActivityResultEvent;
+import che.carleton.ottawa.bluestream.Models.BluetoothService;
+import che.carleton.ottawa.bluestream.R;
+import che.carleton.ottawa.bluestream.Settings;
 
 /**
  * Provides UI for the screen capture.
@@ -298,24 +302,9 @@ public class ScreenCaptureFragment extends Fragment{
 
                     bitmap.copyPixelsFromBuffer(buffer);
                     bitmap = Bitmap.createScaledBitmap(bitmap, 480, 640, false);
+
                     // Compress bitmap and send over to output stream in bluetooth socket
-
-                    int []rate = {10,20,30,40,50,60,70,80,90,98};
-                    for (int i = 0; i < 0; i++) {
-                        String path = Environment.getExternalStorageDirectory().toString();
-                        OutputStream fOut = null;
-                        File file = new File(path, "F"+rate[i]+".jpg"); // the File to save to
-                        fOut = new FileOutputStream(file);
-
-                        bitmap.compress(Bitmap.CompressFormat.JPEG, rate[i], jpegByteOutStream);
-                        jpegByteOutStream.writeTo(fOut);
-
-                        // saving the Bitmap to a file compressed as a JPEG with 85% compression rate
-                        fOut.flush();
-                        fOut.close(); // do not forget to close the stream
-                    }
-
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 50, jpegByteOutStream);
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, Settings.QUALITY_LEVEL, jpegByteOutStream);
                     // Send the byte output stream to bluetooth output stream
                     mBluetoothService.write(jpegByteOutStream.toByteArray());
 

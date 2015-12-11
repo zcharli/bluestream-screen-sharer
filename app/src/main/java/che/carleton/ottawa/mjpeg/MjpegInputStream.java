@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-import che.carleton.ottawa.bluestream.BluetoothService;
+import che.carleton.ottawa.bluestream.Models.BluetoothService;
 
 /**
  * Created by Ziqiao Charlie Li on 10/27/2015.

@@ -36,8 +36,6 @@
     <string name="screen_capture_status">Status</string>
     <string name="screen_capture_record">Record</string>
 
-
-
     <!-- Device Profile -->
     <string name="device_profile">No Profile\n(Disconnected)</string>
     <string name="device_connect_all">Connect All</string>
@@ -45,4 +43,32 @@
     <string name="device_mac_address">Mac Address: \n00:00:00:00:00:00</string>
     <string name="device_connect">Connect</string>
     <string name="device_disconnect">Disconnect</string>
+
+    <!-- Floating Action Bar Strings -->
+    <string name="reset_connection">Reset</string>
+    <string name="dismiss_popup">Close</string>
+
+    <!-- NavDrawer Strings -->
+    <string name="desc_list_item_icon">Item Icon</string>
+
+
+    <!-- Nav Drawer Menu Titles -->
+    <string-array name="nav_drawer_items">
+        <item >Home</item>
+        <item >Connections</item>
+        <!--<item >Checkout</item>-->
+        <!--<item >History</item>-->
+        <item >Settings</item>
+        <!--<item >Logout</item>-->
+    </string-array>
+    <!-- Keep them in order as the titles are in -->
+    <array name="nav_drawer_icons">
+        <item>@drawable/ic_home</item>
+        <item>@drawable/ic_search</item><!-- ic_people -->
+        <!--<item>@drawable/ic_checkout</item>&lt;!&ndash; ic_photos &ndash;&gt;-->
+        <!--<item>@drawable/ic_history</item>&lt;!&ndash; ic_communities &ndash;&gt;-->
+        <item>@drawable/ic_settings</item><!-- ic_pages -->
+        <!--<item>@drawable/ic_logout</item>&lt;!&ndash; ic_whats_hot &ndash;&gt;-->
+    </array>
+
 </resources>

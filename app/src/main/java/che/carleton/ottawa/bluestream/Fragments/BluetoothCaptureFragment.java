@@ -1,4 +1,4 @@
-package che.carleton.ottawa.bluestream;
+package che.carleton.ottawa.bluestream.Fragments;
 
 import android.app.ActionBar;
 import android.app.Activity;
@@ -33,6 +33,10 @@ import android.widget.Toast;
 import java.io.InputStream;
 import java.util.Set;
 
+import che.carleton.ottawa.bluestream.Models.BluetoothService;
+import che.carleton.ottawa.bluestream.Constants;
+import che.carleton.ottawa.bluestream.Activities.DeviceListActivity;
+import che.carleton.ottawa.bluestream.R;
 import che.carleton.ottawa.mjpeg.MjpegInputStream;
 import che.carleton.ottawa.mjpeg.MjpegView;
 
@@ -49,7 +53,6 @@ public class BluetoothCaptureFragment extends Fragment {
     private static final int REQUEST_ENABLE_BT = 3;
     private int DISPLAY_WIDTH = 480;
     private int DISPLAY_HEIGHT = 640;
-
     // Layout Views
     private ScreenCaptureFragment mCaptureFragment = null;
 
@@ -121,7 +124,9 @@ public class BluetoothCaptureFragment extends Fragment {
         getView().findViewById(R.id.mjpeg_surface).setVisibility(View.INVISIBLE);
         getActivity().findViewById(R.id.fab).setVisibility(View.VISIBLE);
 
-
+        /*
+          Note to self: Duplicated code. Find a new way to reset other than have these buttons.
+        */
         final FloatingActionButton fab = (FloatingActionButton) getView().getRootView().findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -205,7 +210,12 @@ public class BluetoothCaptureFragment extends Fragment {
                         public void onClick(View v) {
                             FLOATING_ACTION = !FLOATING_ACTION;
                             popupWindow.dismiss();
-                            getFragmentManager().popBackStack();
+                            int totalViewsInFragmentStack = getFragmentManager().getBackStackEntryCount();
+                            while(totalViewsInFragmentStack != 0)
+                            {
+                                getFragmentManager().popBackStack();
+                                totalViewsInFragmentStack--;
+                            }
                             getView().getRootView().findViewById(R.id.fab).setVisibility(View.INVISIBLE);
                         }
                     });
@@ -334,34 +344,37 @@ public class BluetoothCaptureFragment extends Fragment {
 
 
         for (BluetoothDevice device : pairedDevices) {
-            ImageButton profile = (ImageButton) getView().findViewById(profile_id[++profile_index]);
-            final int index = profile_index;
-            final BluetoothDevice temp_device = device;
-            getView().findViewById(temp_switch[profile_index]).setEnabled(false);
-            profile.setOnClickListener(new Button.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    profile_index = index;
-                    ImageView profile_img = (ImageView) getView().findViewById(R.id.profile_img);
-                    profile_img.setBackgroundResource(profile_icon[profile_index]);
+            if(profile_index + 1 < Constants.MAX_PROFILE_CONNECTIONS) {
+                ImageButton profile = (ImageButton) getView().findViewById(profile_id[++profile_index]);
+                final int index = profile_index;
+                final BluetoothDevice temp_device = device;
+                getView().findViewById(temp_switch[profile_index]).setEnabled(false);
+                profile.setOnClickListener(new Button.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        profile_index = index;
+                        ImageView profile_img = (ImageView) getView().findViewById(R.id.profile_img);
+                        profile_img.setBackgroundResource(profile_icon[profile_index]);
 
-                    Button profile_connection = (Button) getView().findViewById(R.id.profile_connection);
-                    if (profile_playing[profile_index] == 1) {
-                        profile_connection.setText(R.string.device_disconnect);
-                    } else {
-                        profile_connection.setText(R.string.device_connect);
+                        Button profile_connection = (Button) getView().findViewById(R.id.profile_connection);
+                        if (profile_playing[profile_index] == 1) {
+                            profile_connection.setText(R.string.device_disconnect);
+                        } else {
+                            profile_connection.setText(R.string.device_connect);
+                        }
+                        profile_connection.setEnabled(true);
+                        getView().findViewById(temp_switch[profile_index]).setEnabled(false);
+
+                        TextView profile_name = (TextView) getView().findViewById(R.id.profile_name);
+                        profile_name.setText(temp_device.getName() + "\n(Disconnected)");
+
+                        TextView mac_address = (TextView) getView().findViewById(R.id.mac_address);
+                        mac_address.setText("Mac Address: \n" + temp_device.getAddress());
                     }
-                    profile_connection.setEnabled(true);
-                    getView().findViewById(temp_switch[profile_index]).setEnabled(false);
+                });
+                mac_address[profile_index] = temp_device.getAddress();
+            }
 
-                    TextView profile_name = (TextView) getView().findViewById(R.id.profile_name);
-                    profile_name.setText(temp_device.getName() + "\n(Disconnected)");
-
-                    TextView mac_address = (TextView) getView().findViewById(R.id.mac_address);
-                    mac_address.setText("Mac Address: \n" + temp_device.getAddress());
-                }
-            });
-            mac_address[profile_index] = temp_device.getAddress();
         }
 
         while(profile_index < 7) {

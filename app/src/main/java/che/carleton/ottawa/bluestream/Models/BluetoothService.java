@@ -1,4 +1,4 @@
-package che.carleton.ottawa.bluestream;
+package che.carleton.ottawa.bluestream.Models;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.UUID;
+
+import che.carleton.ottawa.bluestream.Constants;
 
 /**
  * This class does all the work for setting up and managing Bluetooth
