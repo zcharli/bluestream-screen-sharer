@@ -185,7 +185,6 @@ public class MjpegInputStream extends DataInputStream {
     }
 
     public int readMjpegFrame(Bitmap bmp) throws IOException {
-        String signalStrength = mBluetoothService.getSignalStrenghOfConnectedDevice();
         mark(FRAME_MAX_LENGTH);
         int headerLen;
         try {

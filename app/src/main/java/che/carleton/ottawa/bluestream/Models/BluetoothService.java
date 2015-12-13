@@ -349,9 +349,6 @@ public class BluetoothService {
         }
     }
 
-    public String getSignalStrenghOfConnectedDevice() {
-        return mConnectThread.mmDevice.EXTRA_RSSI;
-    }
 
     /**
      * This thread runs while attempting to make an outgoing connection
